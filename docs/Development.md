@@ -6,7 +6,7 @@ Agent Manager uses a Python backend service and a Go terminal client.
 
 Planned layout:
 
-- `backend/`: Python HTTP service, routing logic, backend execution, and configuration loading.
+- `backend/`: Python websocket service, routing logic, backend execution, and configuration loading.
 - `cmd/agent-manager/`: Go terminal client entrypoint.
 - `config/`: Example configuration files.
 - `docs/`: Project documentation that is not part of the README.
@@ -26,7 +26,8 @@ These conventions are part of the project contract and should stay stable unless
 - Python package and module names use lowercase snake_case.
 - Go packages use short lowercase names without underscores.
 - CLI commands and flags use kebab-case.
-- HTTP routes use plural kebab-case resources, such as `/v1/tasks` and `/v1/backends`.
+- Websocket paths use versioned kebab-case resources, such as `/v1/session`.
+- HTTP routes are reserved for optional non-task APIs such as health and backend status.
 - JSON and TOML keys use snake_case.
 - Environment variables use the `AGENT_MANAGER_` prefix and uppercase snake_case.
 - Git branches use kebab-case with a short type prefix, such as `docs/initialize-project` or `feature/routing-rules`.

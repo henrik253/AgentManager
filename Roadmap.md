@@ -18,24 +18,34 @@ Status: Complete
 - [x] Define naming conventions for backends, models, routes, and configuration keys.
 - [x] Defer `README.md` creation to the documentation phase.
 
-## 2. Core Service Endpoint
+## 2. Persistent Websocket Service
 
-Status: Not started
+Status: In progress
 
-- [ ] Select the HTTP server framework.
-- [ ] Create a minimal service entrypoint.
-- [ ] Add a prompt submission endpoint.
-  - [ ] Accept prompt text.
-  - [ ] Accept optional backend selection.
-  - [ ] Accept optional model or tier preference.
-  - [ ] Validate required fields.
-- [ ] Define the response format.
-  - [ ] Success payload.
-  - [ ] Failure payload.
+- [x] Select the Python websocket server framework.
+  - [x] Use the `websockets` asyncio server library.
+- [x] Create a minimal service entrypoint.
+- [x] Add a persistent websocket session path.
+  - [x] Accept a session connection on `/v1/session`.
+  - [x] Accept prompt submission messages.
+  - [x] Accept optional backend selection.
+  - [x] Accept optional model or tier preference.
+  - [x] Validate required message fields.
+  - [x] Support client-side cancellation messages.
+- [x] Define the streaming event format.
+  - [x] Session accepted event.
+  - [x] Routing decision event.
+  - [ ] Backend process started event.
+  - [ ] Stdout chunk event.
+  - [ ] Stderr chunk event.
+  - [x] Status update event.
+  - [ ] Final success event.
+  - [x] Final failure event.
   - [ ] Backend metadata.
   - [ ] Exit status metadata.
-- [ ] Add basic request logging.
-- [ ] Add local-only default binding for safer development.
+- [ ] Add basic connection and session logging.
+- [x] Add local-only default binding for safer development.
+- [x] Avoid HTTP task submission endpoints.
 
 ## 3. Backend Abstraction
 
@@ -104,7 +114,7 @@ Status: Not started
   - [ ] Codex limit messages.
   - [ ] Generic rate limit messages.
 - [ ] Add manual reset or override behavior.
-- [ ] Add availability inspection endpoint or command.
+- [ ] Add availability inspection websocket message or terminal command.
 
 ## 6. Local Terminal Client
 
@@ -116,6 +126,8 @@ Status: Not started
   - [ ] Accept prompt from stdin.
   - [ ] Accept backend override.
   - [ ] Accept model or tier override.
+- [ ] Open a persistent websocket session to the backend.
+- [ ] Render streamed websocket events as they arrive.
 - [ ] Print backend selection metadata.
 - [ ] Print agent output cleanly.
 - [ ] Return meaningful exit codes.
@@ -156,8 +168,8 @@ Status: Not started
 - [ ] Log routing decisions.
 - [ ] Log backend execution duration.
 - [ ] Log backend failures without leaking prompt content by default.
-- [ ] Add a health endpoint.
-- [ ] Add a backend status endpoint.
+- [ ] Add a health endpoint for process-level readiness.
+- [ ] Add a backend status endpoint or websocket inspection message.
 
 ## 10. Testing
 
@@ -167,7 +179,7 @@ Status: Not started
 - [ ] Add unit tests for configuration parsing.
 - [ ] Add unit tests for limit detection.
 - [ ] Add integration tests with mocked backend commands.
-- [ ] Add endpoint tests.
+- [ ] Add websocket session tests.
 - [ ] Add terminal client tests.
 - [ ] Document how to run the test suite.
 
@@ -180,8 +192,10 @@ Status: Not started
   - [ ] Show installation steps.
   - [ ] Show server startup steps.
   - [ ] Show terminal client usage.
+  - [ ] Explain persistent websocket transport.
   - [ ] Show routing examples.
 - [ ] Document configuration options.
+- [x] Document websocket message and event shape.
 - [ ] Document backend setup.
   - [ ] Claude CLI setup assumptions.
   - [ ] Codex setup assumptions.
@@ -189,13 +203,12 @@ Status: Not started
   - [ ] Missing backend CLI.
   - [ ] Rate limit detected.
   - [ ] Backend command failed.
-  - [ ] Endpoint unavailable.
+  - [ ] Websocket connection unavailable.
 
 ## 12. Future Enhancements
 
 Status: Not started
 
-- [ ] Streaming responses from running agents.
 - [ ] Job queue for long-running tasks.
 - [ ] Persistent task history.
 - [ ] Web dashboard for backend status.

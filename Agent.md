@@ -2,7 +2,7 @@
 
 Agent Manager is a project-local service for routing prompts from a local terminal to agent CLIs installed on this server. The first supported agent backends are Claude CLI and Codex.
 
-The core goal is to provide a simple endpoint that can start an available agent with a supplied prompt, then return or stream the resulting output back to the caller.
+The core goal is to provide a persistent websocket connection that can start an available agent with a supplied prompt, then stream the agent's activity, output, status changes, and final result back to the caller as they happen.
 
 ## Problem
 
@@ -10,15 +10,15 @@ Developers often work across multiple AI coding agents, each with different stre
 
 ## Primary Use Case
 
-A user on a local machine sends a prompt from the terminal to this service. The service receives the prompt, decides which configured agent backend should handle it, starts that backend on the server, and returns the result.
+A user on a local machine opens a websocket session to this service from a terminal client. The client sends a prompt over that session, the service decides which configured agent backend should handle it, starts that backend on the server, and streams progress and output back until the agent completes.
 
 Example workflow:
 
 1. User runs a terminal command with a prompt.
-2. The command sends the prompt to Agent Manager.
+2. The command opens or reuses a websocket connection to Agent Manager.
 3. Agent Manager selects an agent backend.
 4. Agent Manager starts Claude CLI or Codex with the prompt.
-5. Agent Manager reports the agent result back to the user.
+5. Agent Manager streams routing information, process lifecycle events, stdout, stderr, and the final result back to the user.
 
 ## Routing Goals
 
@@ -72,9 +72,9 @@ The initial configuration format is TOML. Shared examples live under `config/`, 
 
 ## Implementation Stack
 
-The backend service is written in Python. It owns the HTTP endpoint, configuration loading, routing rules, backend availability state, and process execution for agent CLIs.
+The backend service is written in Python. It owns the websocket server, configuration loading, routing rules, backend availability state, and process execution for agent CLIs.
 
-The local terminal client is written in Go. It owns argument parsing, stdin handling, request submission to the backend, output formatting, and meaningful terminal exit codes.
+The local terminal client is written in Go. It owns argument parsing, stdin handling, websocket session management, streaming output formatting, and meaningful terminal exit codes.
 
 ## Naming Conventions
 
@@ -84,23 +84,27 @@ Project naming should be predictable across configuration, routes, code, and log
 - Python package and module names use lowercase snake_case.
 - Go packages use short lowercase names without underscores.
 - CLI commands and flags use kebab-case.
-- HTTP routes use plural kebab-case resources, such as `/v1/tasks` and `/v1/backends`.
+- Websocket paths use versioned kebab-case resources, such as `/v1/session`.
+- HTTP routes are reserved for optional non-task APIs such as health and backend status.
 - JSON and TOML keys use snake_case.
 - Environment variables use the `AGENT_MANAGER_` prefix and uppercase snake_case.
 - Git branches use kebab-case with a short type prefix, such as `docs/initialize-project` or `feature/routing-rules`.
 
-## Endpoint Responsibilities
+## Websocket Session Responsibilities
 
-The endpoint should:
+The websocket session should:
 
-- Accept a prompt or task payload.
+- Accept a prompt or task payload as a client message.
 - Accept optional routing preferences.
 - Validate the request.
 - Resolve the target backend.
 - Start the selected agent process.
-- Capture stdout, stderr, exit code, and relevant metadata.
-- Return a clear success or failure response.
+- Stream structured events for routing decisions, process start, stdout chunks, stderr chunks, status updates, errors, cancellation, exit code, and relevant metadata.
+- Return a clear final success or failure event.
+- Keep the client experience close to the native agent by preserving backend-specific output where possible.
 - Avoid leaking secrets or unrelated environment details.
+
+The initial service should avoid HTTP task submission endpoints. HTTP can be added later for narrow inspection APIs, but agent interaction should use the persistent websocket transport.
 
 ## Non-Goals For The Initial Version
 

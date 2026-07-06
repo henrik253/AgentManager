@@ -4,6 +4,7 @@
 [server]
 host = "127.0.0.1"
 port = 8765
+websocket_path = "/v1/session"
 
 [routing]
 mode = "automatic"
