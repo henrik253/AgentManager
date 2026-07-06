@@ -1,0 +1,35 @@
+# Fallback-enabled Agent Manager configuration.
+
+[server]
+host = "127.0.0.1"
+port = 8765
+websocket_path = "/v1/session"
+
+[workspace]
+worktree_root = ".agent-manager/worktrees"
+branch_prefix = "agent-task/"
+allow_existing_worktree = false
+
+[routing]
+mode = "automatic"
+preferred_backends = ["gemini"]
+allow_fallback = true
+default_backend = "codex"
+
+[[backends]]
+id = "gemini"
+display_name = "Gemini CLI"
+command = "gemini"
+enabled = true
+
+[[backends]]
+id = "codex"
+display_name = "Codex"
+command = "codex"
+enabled = true
+
+[[backends]]
+id = "claude"
+display_name = "Claude CLI"
+command = "claude"
+enabled = true

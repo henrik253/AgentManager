@@ -20,6 +20,43 @@ Runtime agent tasks should use separate git worktrees. The service architecture 
 
 Initial backend detection checks for the configured command on `PATH`. The default backend commands are `claude`, `codex`, and `gemini`.
 
+## Configuration
+
+Agent Manager uses TOML configuration. When `--config` is omitted, the server searches from the current directory upward for:
+
+1. `agent-manager.local.toml`
+2. `agent-manager.toml`
+
+If neither file exists in the project tree, development commands fall back to `config/agent-manager.example.toml`.
+
+The checked-in `config/` directory includes reusable examples:
+
+- `agent-manager.example.toml`
+- `agent-manager.claude-first.toml`
+- `agent-manager.codex-first.toml`
+- `agent-manager.explicit-only.toml`
+- `agent-manager.fallback-enabled.toml`
+
+Supported environment overrides:
+
+- `AGENT_MANAGER_CONFIG`: Explicit config path.
+- `AGENT_MANAGER_HOST`: Server host.
+- `AGENT_MANAGER_PORT`: Server port.
+- `AGENT_MANAGER_WEBSOCKET_PATH`: Websocket session path.
+- `AGENT_MANAGER_MAX_MESSAGE_SIZE`: Websocket message size limit.
+- `AGENT_MANAGER_WORKTREE_ROOT`: Project-relative task worktree root.
+- `AGENT_MANAGER_BRANCH_PREFIX`: Branch prefix for generated task branches.
+- `AGENT_MANAGER_ALLOW_EXISTING_WORKTREE`: Boolean existing-worktree toggle.
+- `AGENT_MANAGER_ROUTING_MODE`: `automatic` or `explicit`.
+- `AGENT_MANAGER_PREFERRED_BACKENDS`: Comma-separated backend ids.
+- `AGENT_MANAGER_ALLOW_FALLBACK`: Boolean fallback toggle.
+- `AGENT_MANAGER_DEFAULT_BACKEND`: Default backend id.
+- `AGENT_MANAGER_BACKEND_<ID>_COMMAND`: Backend command override.
+- `AGENT_MANAGER_BACKEND_<ID>_ENABLED`: Boolean backend enabled toggle.
+- `AGENT_MANAGER_BACKEND_<ID>_ARGS`: Comma-separated backend argument override.
+
+For backend env vars, uppercase backend ids and replace `-` with `_`, for example `AGENT_MANAGER_BACKEND_LOCAL_AGENT_COMMAND`.
+
 ## Local Terminal Client
 
 Start the websocket service in one shell:
@@ -55,6 +92,17 @@ Useful client flags:
 In human output mode, backend stdout chunks are written to stdout. Routing,
 workspace, status, error, and final metadata are written to stderr so command
 output remains pipe-friendly.
+
+The terminal client also reads these environment defaults:
+
+- `AGENT_MANAGER_SERVER_URL`
+- `AGENT_MANAGER_HOST`
+- `AGENT_MANAGER_PORT`
+- `AGENT_MANAGER_WEBSOCKET_PATH`
+- `AGENT_MANAGER_BACKEND`
+- `AGENT_MANAGER_MODEL`
+- `AGENT_MANAGER_JSON`
+- `AGENT_MANAGER_CONNECT_TIMEOUT`
 
 ## Development Workflow
 

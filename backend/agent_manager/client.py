@@ -3,10 +3,11 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
 import sys
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Any, TextIO
+from typing import Any, Mapping, TextIO
 from urllib.parse import urlsplit, urlunsplit
 
 from websockets.asyncio.client import connect
@@ -15,6 +16,7 @@ from websockets.exceptions import ConnectionClosed, WebSocketException
 
 DEFAULT_SERVER_URL = "ws://127.0.0.1:8765"
 DEFAULT_WEBSOCKET_PATH = "/v1/session"
+ENV_PREFIX = "AGENT_MANAGER_"
 
 EXIT_SUCCESS = 0
 EXIT_FAILURE = 1
@@ -38,21 +40,34 @@ class ClientOptions:
 
 
 def build_parser() -> argparse.ArgumentParser:
+    server_url = default_server_url(os.environ)
+    websocket_path = os.environ.get(
+        f"{ENV_PREFIX}WEBSOCKET_PATH",
+        DEFAULT_WEBSOCKET_PATH,
+    )
     parser = argparse.ArgumentParser(
         description="Submit a prompt to the local Agent Manager websocket server."
     )
     parser.add_argument(
         "--url",
-        default=DEFAULT_SERVER_URL,
-        help=f"Server websocket base URL. Defaults to {DEFAULT_SERVER_URL}.",
+        default=server_url,
+        help=f"Server websocket base URL. Defaults to {server_url}.",
     )
     parser.add_argument(
         "--path",
-        default=DEFAULT_WEBSOCKET_PATH,
-        help=f"Websocket session path. Defaults to {DEFAULT_WEBSOCKET_PATH}.",
+        default=websocket_path,
+        help=f"Websocket session path. Defaults to {websocket_path}.",
     )
-    parser.add_argument("--backend", help="Backend id override, such as codex.")
-    parser.add_argument("--model", help="Model or tier override for the selected backend.")
+    parser.add_argument(
+        "--backend",
+        default=os.environ.get(f"{ENV_PREFIX}BACKEND"),
+        help="Backend id override, such as codex.",
+    )
+    parser.add_argument(
+        "--model",
+        default=os.environ.get(f"{ENV_PREFIX}MODEL"),
+        help="Model or tier override for the selected backend.",
+    )
     parser.add_argument(
         "--workspace-mode",
         choices=("create_worktree", "existing_worktree"),
@@ -63,11 +78,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--json",
         action="store_true",
+        default=parse_env_bool(os.environ.get(f"{ENV_PREFIX}JSON")),
         help="Print raw server events as newline-delimited JSON.",
     )
     parser.add_argument(
         "--timeout",
         type=float,
+        default=default_timeout(os.environ),
         help="Maximum seconds to wait for a final event.",
     )
     parser.add_argument(
@@ -76,6 +93,28 @@ def build_parser() -> argparse.ArgumentParser:
         help="Prompt text. When omitted, the prompt is read from stdin.",
     )
     return parser
+
+
+def default_server_url(env: Mapping[str, str]) -> str:
+    server_url = env.get(f"{ENV_PREFIX}SERVER_URL")
+    if server_url:
+        return server_url
+    host = env.get(f"{ENV_PREFIX}HOST", "127.0.0.1")
+    port = env.get(f"{ENV_PREFIX}PORT", "8765")
+    return f"ws://{host}:{port}"
+
+
+def default_timeout(env: Mapping[str, str]) -> float | None:
+    value = env.get(f"{ENV_PREFIX}CONNECT_TIMEOUT")
+    if value is None or not value.strip():
+        return None
+    return float(value)
+
+
+def parse_env_bool(value: str | None) -> bool:
+    if value is None:
+        return False
+    return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
 def parse_options(

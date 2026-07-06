@@ -20,6 +20,25 @@ def test_parse_options_uses_prompt_arguments():
     assert options.backend == "codex"
 
 
+def test_parse_options_uses_environment_defaults(monkeypatch):
+    monkeypatch.setenv("AGENT_MANAGER_HOST", "localhost")
+    monkeypatch.setenv("AGENT_MANAGER_PORT", "9999")
+    monkeypatch.setenv("AGENT_MANAGER_WEBSOCKET_PATH", "/custom/session")
+    monkeypatch.setenv("AGENT_MANAGER_BACKEND", "gemini")
+    monkeypatch.setenv("AGENT_MANAGER_MODEL", "pro")
+    monkeypatch.setenv("AGENT_MANAGER_JSON", "true")
+    monkeypatch.setenv("AGENT_MANAGER_CONNECT_TIMEOUT", "5")
+
+    options = parse_options(["Prompt"], stdin=StringIO(""))
+
+    assert options.server_url == "ws://localhost:9999"
+    assert options.websocket_path == "/custom/session"
+    assert options.backend == "gemini"
+    assert options.model == "pro"
+    assert options.json_output
+    assert options.timeout == 5
+
+
 def test_parse_options_reads_prompt_from_stdin():
     options = parse_options(["--model", "default"], stdin=StringIO("Fix from stdin\n"))
 

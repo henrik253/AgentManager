@@ -147,22 +147,23 @@ Status: In progress
 
 ## 7. Configuration Management
 
-Status: Not started
+Status: Complete
 
-- [ ] Decide configuration file name and format.
-- [ ] Load project-local configuration.
-- [ ] Validate configuration schema.
-- [ ] Provide useful validation errors.
-- [ ] Define workspace configuration.
-  - [ ] Allowed worktree root.
-  - [ ] Task branch prefix.
-  - [ ] Existing worktree attachment rules.
-- [ ] Support environment variable overrides for sensitive values.
-- [ ] Add example configurations.
-  - [ ] Claude-first routing.
-  - [ ] Codex-first routing.
-  - [ ] Explicit-only routing.
-  - [ ] Fallback-enabled routing.
+- [x] Decide configuration file name and format.
+  - [x] Use TOML with `agent-manager.toml` and untracked `agent-manager.local.toml`.
+- [x] Load project-local configuration.
+- [x] Validate configuration schema.
+- [x] Provide useful validation errors.
+- [x] Define workspace configuration.
+  - [x] Allowed worktree root.
+  - [x] Task branch prefix.
+  - [x] Existing worktree attachment rules.
+- [x] Support environment variable overrides for sensitive values.
+- [x] Add example configurations.
+  - [x] Claude-first routing.
+  - [x] Codex-first routing.
+  - [x] Explicit-only routing.
+  - [x] Fallback-enabled routing.
 
 ## 8. Security And Process Safety
 

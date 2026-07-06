@@ -14,7 +14,7 @@ from agent_manager.availability import (
     DEFAULT_AVAILABILITY_STORE,
 )
 from agent_manager.backends import availability_by_id
-from agent_manager.config import AppConfig, DEFAULT_CONFIG_PATH, load_config
+from agent_manager.config import AppConfig, load_config
 from agent_manager.messages import (
     EventWriter,
     parse_client_message,
@@ -253,8 +253,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--config",
         type=Path,
-        default=DEFAULT_CONFIG_PATH,
-        help="Path to the Agent Manager TOML config file.",
+        default=None,
+        help="Path to the Agent Manager TOML config file. Defaults to project discovery.",
     )
     return parser
 
