@@ -1,26 +1,19 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from shutil import which
 from typing import Mapping
 
+from agent_manager.availability import AvailabilityState, BackendAvailability
+from agent_manager.backends import availability_by_id
 from agent_manager.config import AppConfig, BackendConfig
 
 
-AVAILABLE = "available"
-DISABLED = "disabled"
-MISSING_COMMAND = "missing_command"
+AVAILABLE = AvailabilityState.AVAILABLE.value
+DISABLED = AvailabilityState.DISABLED.value
+MISSING = AvailabilityState.MISSING.value
+TEMPORARILY_LIMITED = AvailabilityState.TEMPORARILY_LIMITED.value
+FAILED_HEALTH_CHECK = AvailabilityState.FAILED_HEALTH_CHECK.value
 UNAVAILABLE = "unavailable"
-
-
-@dataclass(frozen=True)
-class BackendAvailability:
-    state: str = AVAILABLE
-    reason: str = "backend is available"
-
-    @property
-    def is_available(self) -> bool:
-        return self.state == AVAILABLE
 
 
 @dataclass(frozen=True)
@@ -138,7 +131,7 @@ def ensure_available(
     backend_id: str, availability: Mapping[str, BackendAvailability]
 ) -> None:
     backend_availability = availability.get(
-        backend_id, BackendAvailability(UNAVAILABLE, "backend availability is unknown")
+        backend_id, unknown_backend_availability(backend_id)
     )
     if backend_availability.is_available:
         return
@@ -152,23 +145,26 @@ def ensure_available(
 def is_available(
     backend_id: str, availability: Mapping[str, BackendAvailability]
 ) -> bool:
-    return availability.get(
-        backend_id, BackendAvailability(UNAVAILABLE, "backend availability is unknown")
-    ).is_available
+    return availability.get(backend_id, unknown_backend_availability(backend_id)).is_available
 
 
 def discover_availability(
     backends: tuple[BackendConfig, ...],
 ) -> dict[str, BackendAvailability]:
-    return {backend.id: discover_backend_availability(backend) for backend in backends}
+    return availability_by_id(backends)
 
 
 def discover_backend_availability(backend: BackendConfig) -> BackendAvailability:
-    if not backend.enabled:
-        return BackendAvailability(DISABLED, "backend is disabled in configuration")
-    if backend.command and which(backend.command) is None:
-        return BackendAvailability(
-            MISSING_COMMAND,
-            f"configured command '{backend.command}' was not found on PATH",
-        )
-    return BackendAvailability(AVAILABLE, "backend is enabled and command is available")
+    return availability_by_id((backend,))[backend.id]
+
+
+def unknown_backend_availability(backend_id: str) -> BackendAvailability:
+    return BackendAvailability(
+        id=backend_id,
+        display_name=backend_id,
+        command=None,
+        enabled=False,
+        state=AvailabilityState.MISSING,
+        executable_path=None,
+        reason="backend availability is unknown",
+    )

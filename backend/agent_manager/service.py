@@ -9,6 +9,10 @@ from urllib.parse import urlsplit
 from websockets.asyncio.server import ServerConnection, serve
 from websockets.exceptions import ConnectionClosed
 
+from agent_manager.availability import (
+    AvailabilityStore,
+    DEFAULT_AVAILABILITY_STORE,
+)
 from agent_manager.backends import availability_by_id
 from agent_manager.config import AppConfig, DEFAULT_CONFIG_PATH, load_config
 from agent_manager.messages import (
@@ -22,7 +26,11 @@ from agent_manager.routing import RoutingError, select_backend
 LOGGER = logging.getLogger("agent_manager")
 
 
-async def handle_session(websocket: ServerConnection, config: AppConfig) -> None:
+async def handle_session(
+    websocket: ServerConnection,
+    config: AppConfig,
+    availability_store: AvailabilityStore = DEFAULT_AVAILABILITY_STORE,
+) -> None:
     request_path = urlsplit(websocket.request.path if websocket.request else "").path
     if request_path != config.server.websocket_path:
         await websocket.close(code=1008, reason="unsupported websocket path")
@@ -35,7 +43,7 @@ async def handle_session(websocket: ServerConnection, config: AppConfig) -> None
         async for raw_message in websocket:
             try:
                 message = parse_client_message(raw_message)
-                await handle_client_message(message, events, config)
+                await handle_client_message(message, events, config, availability_store)
             except ValueError as exc:
                 await events.send(
                     "error",
@@ -48,13 +56,24 @@ async def handle_session(websocket: ServerConnection, config: AppConfig) -> None
 
 
 async def handle_client_message(
-    message: dict, events: EventWriter, config: AppConfig
+    message: dict,
+    events: EventWriter,
+    config: AppConfig,
+    availability_store: AvailabilityStore = DEFAULT_AVAILABILITY_STORE,
 ) -> None:
     message_type = message["type"]
 
     if message_type == "prompt.submit":
         submission = validate_prompt_submission(message)
-        await emit_prompt_lifecycle(submission, events, config)
+        await emit_prompt_lifecycle(submission, events, config, availability_store)
+        return
+
+    if message_type == "availability.list":
+        await emit_availability_list(message, events, config, availability_store)
+        return
+
+    if message_type == "availability.reset":
+        await reset_availability(message, events, config, availability_store)
         return
 
     if message_type == "session.cancel":
@@ -71,11 +90,22 @@ async def handle_client_message(
 
 
 async def emit_prompt_lifecycle(
-    submission: dict, events: EventWriter, config: AppConfig
+    submission: dict,
+    events: EventWriter,
+    config: AppConfig,
+    availability_store: AvailabilityStore = DEFAULT_AVAILABILITY_STORE,
 ) -> None:
-    backend_availability = availability_by_id(config.backends)
+    backend_availability = availability_by_id(
+        config.backends,
+        store=availability_store,
+        model=submission["model"],
+    )
     try:
-        routing_decision = select_backend(submission["backend"], config)
+        routing_decision = select_backend(
+            submission["backend"],
+            config,
+            availability=backend_availability,
+        )
     except RoutingError as exc:
         await events.send(
             "error",
@@ -131,6 +161,75 @@ async def emit_prompt_lifecycle(
         code="backend_execution_not_implemented",
         exit_code=None,
     )
+
+
+async def emit_availability_list(
+    message: dict,
+    events: EventWriter,
+    config: AppConfig,
+    availability_store: AvailabilityStore,
+) -> None:
+    backend_filter = _optional_string_field(message, "backend")
+    model_filter = _optional_string_field(message, "model")
+    backend_availability = availability_by_id(
+        config.backends,
+        store=availability_store,
+        model=model_filter,
+    )
+    await events.send(
+        "availability.list",
+        backend=backend_filter,
+        model=model_filter,
+        backends=[
+            availability.to_event_payload()
+            for availability in backend_availability.values()
+            if backend_filter is None or availability.id == backend_filter
+        ],
+        limits=[
+            limit.to_event_payload()
+            for limit in availability_store.limits(
+                backend_id=backend_filter,
+                model=model_filter,
+            )
+        ],
+    )
+
+
+async def reset_availability(
+    message: dict,
+    events: EventWriter,
+    config: AppConfig,
+    availability_store: AvailabilityStore,
+) -> None:
+    backend_filter = _optional_string_field(message, "backend")
+    model_filter = _optional_string_field(message, "model")
+    reset_count = availability_store.reset(backend_id=backend_filter, model=model_filter)
+    backend_availability = availability_by_id(
+        config.backends,
+        store=availability_store,
+        model=model_filter,
+    )
+    await events.send(
+        "availability.reset",
+        backend=backend_filter,
+        model=model_filter,
+        reset_count=reset_count,
+        backends=[
+            availability.to_event_payload()
+            for availability in backend_availability.values()
+            if backend_filter is None or availability.id == backend_filter
+        ],
+    )
+
+
+def _optional_string_field(message: dict, field: str) -> str | None:
+    value = message.get(field)
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        raise ValueError(f"{field} must be a string when provided")
+    stripped = value.strip()
+    return stripped or None
 
 
 async def run_server(config: AppConfig) -> None:

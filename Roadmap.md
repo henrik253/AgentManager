@@ -97,33 +97,33 @@ Status: In progress
   - [x] Return a clear error for unavailable backends unless forced.
 - [x] Implement automatic routing.
   - [x] Select the first available preferred backend.
-  - [ ] Skip temporarily limited backends.
+  - [x] Skip temporarily limited backends.
   - [x] Fall back when a backend command is missing.
   - [x] Explain which backend was selected and why.
 - [x] Add tests for routing priority and fallback behavior.
 
 ## 5. Limit And Availability Tracking
 
-Status: Not started
+Status: In progress
 
-- [ ] Define backend availability states.
-  - [ ] Available.
-  - [ ] Missing.
-  - [ ] Temporarily limited.
-  - [ ] Failed health check.
-  - [ ] Disabled by configuration.
-- [ ] Store temporary limit state.
-  - [ ] Backend identifier.
-  - [ ] Model or tier identifier when applicable.
-  - [ ] Reason.
-  - [ ] First detected timestamp.
-  - [ ] Retry-after timestamp when known.
-- [ ] Parse known limit messages.
-  - [ ] Claude CLI 5-hour or weekly limit messages.
-  - [ ] Codex limit messages.
-  - [ ] Generic rate limit messages.
-- [ ] Add manual reset or override behavior.
-- [ ] Add availability inspection websocket message or terminal command.
+- [x] Define backend availability states.
+  - [x] Available.
+  - [x] Missing.
+  - [x] Temporarily limited.
+  - [x] Failed health check.
+  - [x] Disabled by configuration.
+- [x] Store temporary limit state.
+  - [x] Backend identifier.
+  - [x] Model or tier identifier when applicable.
+  - [x] Reason.
+  - [x] First detected timestamp.
+  - [x] Retry-after timestamp when known.
+- [x] Parse known limit messages.
+  - [x] Claude CLI 5-hour or weekly limit messages.
+  - [x] Codex limit messages.
+  - [x] Generic rate limit messages.
+- [x] Add manual reset or override behavior.
+- [x] Add availability inspection websocket message or terminal command.
 
 ## 6. Local Terminal Client
 

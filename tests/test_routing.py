@@ -2,6 +2,7 @@ import pytest
 
 from agent_manager.config import AppConfig, BackendConfig, RoutingConfig, load_config
 from agent_manager.routing import (
+    AvailabilityState,
     BackendAvailability,
     RoutingError,
     discover_backend_availability,
@@ -25,12 +26,28 @@ def app_config(
     )
 
 
+def backend_availability(
+    backend_id: str,
+    state: AvailabilityState = AvailabilityState.AVAILABLE,
+    reason: str = "backend is available",
+) -> BackendAvailability:
+    return BackendAvailability(
+        id=backend_id,
+        display_name=backend_id,
+        command=None,
+        enabled=state != AvailabilityState.DISABLED,
+        state=state,
+        executable_path=None,
+        reason=reason,
+    )
+
+
 def test_explicit_backend_selection_requires_known_backend():
     with pytest.raises(RoutingError) as exc:
         select_backend(
             "missing",
             app_config(),
-            availability={"codex": BackendAvailability()},
+            availability={"codex": backend_availability("codex")},
         )
 
     assert exc.value.code == "unknown_backend"
@@ -42,7 +59,9 @@ def test_explicit_backend_selection_requires_available_backend():
             "codex",
             app_config(),
             availability={
-                "codex": BackendAvailability("missing_command", "codex was not found")
+                "codex": backend_availability(
+                    "codex", AvailabilityState.MISSING, "codex was not found"
+                )
             },
         )
 
@@ -54,7 +73,7 @@ def test_explicit_backend_selection_returns_reason():
     decision = select_backend(
         "codex",
         app_config(),
-        availability={"codex": BackendAvailability()},
+        availability={"codex": backend_availability("codex")},
     )
 
     assert decision.requested_backend == "codex"
@@ -67,8 +86,12 @@ def test_automatic_selection_uses_first_available_preferred_backend():
         None,
         app_config(),
         availability={
-            "claude": BackendAvailability("limited", "temporary limit reached"),
-            "codex": BackendAvailability(),
+            "claude": backend_availability(
+                "claude",
+                AvailabilityState.TEMPORARILY_LIMITED,
+                "temporary limit reached",
+            ),
+            "codex": backend_availability("codex"),
         },
     )
 
@@ -88,8 +111,10 @@ def test_automatic_selection_can_use_default_backend_after_preferred():
             )
         ),
         availability={
-            "claude": BackendAvailability("missing_command", "claude was not found"),
-            "gemini": BackendAvailability(),
+            "claude": backend_availability(
+                "claude", AvailabilityState.MISSING, "claude was not found"
+            ),
+            "gemini": backend_availability("gemini"),
         },
     )
 
@@ -107,8 +132,10 @@ def test_automatic_selection_respects_disabled_fallback():
                 )
             ),
             availability={
-                "claude": BackendAvailability("missing_command", "claude was not found"),
-                "codex": BackendAvailability(),
+                "claude": backend_availability(
+                    "claude", AvailabilityState.MISSING, "claude was not found"
+                ),
+                "codex": backend_availability("codex"),
             },
         )
 
@@ -120,8 +147,10 @@ def test_automatic_selection_uses_fallback_when_allowed():
         None,
         app_config(routing=RoutingConfig(preferred_backends=("claude",))),
         availability={
-            "claude": BackendAvailability("missing_command", "claude was not found"),
-            "codex": BackendAvailability(),
+            "claude": backend_availability(
+                "claude", AvailabilityState.MISSING, "claude was not found"
+            ),
+            "codex": backend_availability("codex"),
         },
     )
 
@@ -134,7 +163,7 @@ def test_explicit_mode_requires_backend_without_default():
         select_backend(
             None,
             app_config(routing=RoutingConfig(mode="explicit")),
-            availability={"codex": BackendAvailability()},
+            availability={"codex": backend_availability("codex")},
         )
 
     assert exc.value.code == "backend_required"
