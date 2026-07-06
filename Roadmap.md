@@ -10,7 +10,7 @@ Status: Complete
 - [x] Create a structured roadmap in `Roadmap.md`.
 - [x] Choose the initial implementation stack.
   - [x] Python backend service.
-  - [x] Go terminal client.
+  - [x] Local terminal client contract, with Python acceptable for the first executable client and a compiled client left open for later.
 - [x] Add baseline repository files.
   - [x] `.gitignore`
   - [x] Example configuration file
@@ -129,7 +129,8 @@ Status: Not started
 
 Status: Not started
 
-- [ ] Decide whether the client is a shell script, Node CLI, Python CLI, or compiled binary.
+- [x] Document the local terminal client design in `docs/TerminalClientDesign.md`.
+- [ ] Implement the first executable client, with Python preferred for phase 6 unless the implementation branch has a working compiled toolchain.
 - [ ] Implement prompt submission from the terminal.
   - [ ] Accept prompt as an argument.
   - [ ] Accept prompt from stdin.

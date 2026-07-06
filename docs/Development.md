@@ -1,13 +1,13 @@
 # Development
 
-Agent Manager uses a Python backend service and a Go terminal client.
+Agent Manager uses a Python backend service and a local terminal client. The terminal client contract is language-neutral; the first executable client may be Python because it matches the backend toolchain and avoids requiring Go in environments where Go is not installed.
 
 ## Repository Layout
 
 Planned layout:
 
 - `backend/`: Python websocket service, routing logic, backend execution, and configuration loading.
-- `cmd/agent-manager/`: Go terminal client entrypoint.
+- `backend/agent_manager/client.py` or `cmd/agent-manager/`: terminal client entrypoint, depending on the implementation language chosen for the current phase.
 - `config/`: Example configuration files.
 - `docs/`: Project documentation that is not part of the README.
 - `tests/`: Backend tests and integration fixtures when the backend is added.
@@ -28,7 +28,7 @@ These conventions are part of the project contract and should stay stable unless
 
 - Backend identifiers use lowercase kebab-case or single lowercase words, such as `claude`, `codex`, or `local-agent`.
 - Python package and module names use lowercase snake_case.
-- Go packages use short lowercase names without underscores.
+- Go packages, if a compiled client is added later, use short lowercase names without underscores.
 - CLI commands and flags use kebab-case.
 - Websocket paths use versioned kebab-case resources, such as `/v1/session`.
 - HTTP routes are reserved for optional non-task APIs such as health and backend status.

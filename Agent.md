@@ -79,7 +79,7 @@ The initial configuration format is TOML. Shared examples live under `config/`, 
 
 The backend service is written in Python. It owns the websocket server, configuration loading, routing rules, backend availability state, and process execution for agent CLIs.
 
-The local terminal client is written in Go. It owns argument parsing, stdin handling, websocket session management, streaming output formatting, and meaningful terminal exit codes.
+The local terminal client owns argument parsing, stdin handling, websocket session management, streaming output formatting, and meaningful terminal exit codes. The client contract is language-neutral: the first executable client may be Python for pragmatic local development, while a future compiled client remains possible.
 
 ## Naming Conventions
 
@@ -87,7 +87,7 @@ Project naming should be predictable across configuration, routes, code, and log
 
 - Backend identifiers use lowercase kebab-case or single lowercase words, such as `claude`, `codex`, or `local-agent`.
 - Python package and module names use lowercase snake_case.
-- Go packages use short lowercase names without underscores.
+- Go packages, if a compiled client is added later, use short lowercase names without underscores.
 - CLI commands and flags use kebab-case.
 - Websocket paths use versioned kebab-case resources, such as `/v1/session`.
 - HTTP routes are reserved for optional non-task APIs such as health and backend status.
