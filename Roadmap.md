@@ -10,7 +10,7 @@ Status: Complete
 - [x] Create a structured roadmap in `Roadmap.md`.
 - [x] Choose the initial implementation stack.
   - [x] Python backend service.
-  - [x] Go terminal client.
+  - [x] Python terminal client.
 - [x] Add baseline repository files.
   - [x] `.gitignore`
   - [x] Example configuration file
@@ -127,20 +127,22 @@ Status: Not started
 
 ## 6. Local Terminal Client
 
-Status: Not started
+Status: In progress
 
-- [ ] Decide whether the client is a shell script, Node CLI, Python CLI, or compiled binary.
-- [ ] Implement prompt submission from the terminal.
-  - [ ] Accept prompt as an argument.
-  - [ ] Accept prompt from stdin.
-  - [ ] Accept backend override.
-  - [ ] Accept model or tier override.
-- [ ] Open a persistent websocket session to the backend.
-- [ ] Render streamed websocket events as they arrive.
-- [ ] Print backend selection metadata.
-- [ ] Print agent output cleanly.
-- [ ] Return meaningful exit codes.
-- [ ] Add examples for common workflows.
+- [x] Decide whether the client is a shell script, Node CLI, Python CLI, or compiled binary.
+  - [x] Use a Python CLI for now so the existing Python package is immediately executable without adding Go to the toolchain.
+- [x] Implement prompt submission from the terminal.
+  - [x] Accept prompt as an argument.
+  - [x] Accept prompt from stdin.
+  - [x] Accept backend override.
+  - [x] Accept model or tier override.
+  - [x] Accept workspace branch and worktree hints.
+- [x] Open a persistent websocket session to the backend.
+- [x] Render streamed websocket events as they arrive.
+- [x] Print backend selection metadata.
+- [x] Print agent output cleanly.
+- [x] Return meaningful exit codes.
+- [x] Add examples for common workflows.
 
 ## 7. Configuration Management
 
@@ -195,7 +197,7 @@ Status: Not started
 - [ ] Add unit tests for limit detection.
 - [ ] Add integration tests with mocked backend commands.
 - [ ] Add websocket session tests.
-- [ ] Add terminal client tests.
+- [x] Add terminal client tests.
 - [ ] Document how to run the test suite.
 
 ## 11. Documentation

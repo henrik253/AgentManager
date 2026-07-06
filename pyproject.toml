@@ -13,6 +13,7 @@ test = [
 ]
 
 [project.scripts]
+agent-manager = "agent_manager.client:main"
 agent-manager-server = "agent_manager.service:main"
 
 [build-system]
