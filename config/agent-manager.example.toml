@@ -1,0 +1,23 @@
+# Example Agent Manager project configuration.
+# Copy this file to agent-manager.local.toml for local overrides.
+
+[server]
+host = "127.0.0.1"
+port = 8765
+
+[routing]
+mode = "automatic"
+preferred_backends = ["claude", "codex"]
+allow_fallback = true
+
+[[backends]]
+id = "claude"
+display_name = "Claude CLI"
+command = "claude"
+enabled = true
+
+[[backends]]
+id = "codex"
+display_name = "Codex"
+command = "codex"
+enabled = true

@@ -4,17 +4,19 @@ This roadmap tracks the planned work for Agent Manager. Each task is split into 
 
 ## 1. Project Initialization
 
-Status: In progress
+Status: Complete
 
 - [x] Define the project goal in `Agent.md`.
 - [x] Create a structured roadmap in `Roadmap.md`.
-- [ ] Choose the initial implementation stack.
-- [ ] Add baseline repository files.
-  - [ ] `README.md`
-  - [ ] `.gitignore`
-  - [ ] Example configuration file
-  - [ ] Basic development instructions
-- [ ] Define naming conventions for backends, models, routes, and configuration keys.
+- [x] Choose the initial implementation stack.
+  - [x] Python backend service.
+  - [x] Go terminal client.
+- [x] Add baseline repository files.
+  - [x] `.gitignore`
+  - [x] Example configuration file
+  - [x] Basic development instructions
+- [x] Define naming conventions for backends, models, routes, and configuration keys.
+- [x] Defer `README.md` creation to the documentation phase.
 
 ## 2. Core Service Endpoint
 

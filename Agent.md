@@ -68,6 +68,27 @@ Configuration should live in the project using this application. It should defin
 
 Configuration should be human-readable and easy to version with the project.
 
+The initial configuration format is TOML. Shared examples live under `config/`, while machine-specific overrides should use `agent-manager.local.toml` and stay out of git.
+
+## Implementation Stack
+
+The backend service is written in Python. It owns the HTTP endpoint, configuration loading, routing rules, backend availability state, and process execution for agent CLIs.
+
+The local terminal client is written in Go. It owns argument parsing, stdin handling, request submission to the backend, output formatting, and meaningful terminal exit codes.
+
+## Naming Conventions
+
+Project naming should be predictable across configuration, routes, code, and logs.
+
+- Backend identifiers use lowercase kebab-case or single lowercase words, such as `claude`, `codex`, or `local-agent`.
+- Python package and module names use lowercase snake_case.
+- Go packages use short lowercase names without underscores.
+- CLI commands and flags use kebab-case.
+- HTTP routes use plural kebab-case resources, such as `/v1/tasks` and `/v1/backends`.
+- JSON and TOML keys use snake_case.
+- Environment variables use the `AGENT_MANAGER_` prefix and uppercase snake_case.
+- Git branches use kebab-case with a short type prefix, such as `docs/initialize-project` or `feature/routing-rules`.
+
 ## Endpoint Responsibilities
 
 The endpoint should:
