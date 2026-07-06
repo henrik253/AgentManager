@@ -263,4 +263,7 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     args = build_parser().parse_args()
     config = load_config(args.config)
-    asyncio.run(run_server(config))
+    try:
+        asyncio.run(run_server(config))
+    except KeyboardInterrupt:
+        LOGGER.info("websocket server stopped")
