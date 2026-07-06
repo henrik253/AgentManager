@@ -52,6 +52,59 @@ Requests cancellation of the active prompt for the websocket session.
 }
 ```
 
+### `availability.list`
+
+Requests backend availability and temporary limit state known to the server.
+
+```json
+{
+  "type": "availability.list",
+  "backend": "claude",
+  "model": "default"
+}
+```
+
+Fields:
+
+- `backend`: Optional backend identifier filter.
+- `model`: Optional model or tier filter. Model-specific limits are matched before backend-wide limits.
+
+The server responds with an `availability.list` event containing:
+
+- `backend`: The requested backend filter, or `null`.
+- `model`: The requested model filter, or `null`.
+- `backends`: Backend availability objects.
+- `limits`: Temporary limit objects currently stored in memory.
+
+Availability states are stable strings: `available`, `missing`, `temporarily_limited`, `failed_health_check`, and `disabled`.
+
+Temporary limit objects include:
+
+- `backend_id`: Backend identifier.
+- `model`: Model or tier identifier, or `null` for backend-wide limits.
+- `reason`: Limit reason detected from backend output or recorded by the service.
+- `first_detected`: UTC ISO-8601 timestamp.
+- `retry_after`: UTC ISO-8601 timestamp when known, otherwise `null`.
+
+### `availability.reset`
+
+Clears temporary limit state. Without filters, all temporary limits are cleared.
+
+```json
+{
+  "type": "availability.reset",
+  "backend": "claude",
+  "model": "default"
+}
+```
+
+Fields:
+
+- `backend`: Optional backend identifier filter.
+- `model`: Optional model or tier filter.
+
+The server responds with an `availability.reset` event containing `reset_count` and the remaining backend availability after reset.
+
 ## Server Events
 
 Server events are JSON objects with these common fields:
@@ -70,6 +123,8 @@ Initial phase 2 events:
 - `stdout.chunk`: A chunk of backend stdout.
 - `stderr.chunk`: A chunk of backend stderr.
 - `error`: Recoverable or terminal protocol error.
+- `availability.list`: Backend availability inspection response.
+- `availability.reset`: Manual temporary limit reset response.
 - `final.success`: Task completed successfully.
 - `final.failure`: Task failed, was cancelled, or could not start.
 

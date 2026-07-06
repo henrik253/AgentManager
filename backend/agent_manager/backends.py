@@ -1,38 +1,13 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from enum import StrEnum
 import shutil
 
+from agent_manager.availability import (
+    AvailabilityState,
+    AvailabilityStore,
+    BackendAvailability,
+)
 from agent_manager.config import BackendConfig
-
-
-class AvailabilityState(StrEnum):
-    AVAILABLE = "available"
-    DISABLED = "disabled"
-    MISSING = "missing"
-
-
-@dataclass(frozen=True)
-class BackendAvailability:
-    id: str
-    display_name: str
-    command: str | None
-    enabled: bool
-    state: AvailabilityState
-    executable_path: str | None
-    reason: str
-
-    def to_event_payload(self) -> dict:
-        return {
-            "id": self.id,
-            "display_name": self.display_name,
-            "command": self.command,
-            "enabled": self.enabled,
-            "state": self.state.value,
-            "executable_path": self.executable_path,
-            "reason": self.reason,
-        }
 
 
 def inspect_backend(backend: BackendConfig) -> BackendAvailability:
@@ -87,5 +62,11 @@ def inspect_backends(backends: tuple[BackendConfig, ...]) -> tuple[BackendAvaila
 
 def availability_by_id(
     backends: tuple[BackendConfig, ...],
+    *,
+    store: AvailabilityStore | None = None,
+    model: str | None = None,
 ) -> dict[str, BackendAvailability]:
-    return {availability.id: availability for availability in inspect_backends(backends)}
+    availability = inspect_backends(backends)
+    if store is not None:
+        return store.apply(availability, model=model)
+    return {entry.id: entry for entry in availability}
