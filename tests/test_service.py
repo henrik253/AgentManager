@@ -4,13 +4,16 @@ import json
 from websockets.asyncio.client import connect
 from websockets.asyncio.server import serve
 
-from agent_manager.config import AppConfig, ServerConfig
+from agent_manager.config import AppConfig, BackendConfig, ServerConfig
 from agent_manager.service import handle_session
 
 
 def test_prompt_submission_streams_session_events():
     async def scenario():
-        config = AppConfig(server=ServerConfig(port=0))
+        config = AppConfig(
+            server=ServerConfig(port=0),
+            backends=(BackendConfig(id="codex", command=None),),
+        )
         async with serve(
             lambda websocket: handle_session(websocket, config),
             "127.0.0.1",
@@ -44,6 +47,7 @@ def test_prompt_submission_streams_session_events():
 
                 assert routing["type"] == "routing.decision"
                 assert routing["requested_backend"] == "codex"
+                assert routing["selected_backend"] == "codex"
                 assert workspace["type"] == "workspace.planned"
                 assert workspace["requested_branch"] == "agent-task/websocket-transport"
                 assert status["type"] == "status.update"

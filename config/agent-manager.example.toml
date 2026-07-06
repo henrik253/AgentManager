@@ -15,6 +15,7 @@ allow_existing_worktree = false
 mode = "automatic"
 preferred_backends = ["claude", "codex", "gemini"]
 allow_fallback = true
+default_backend = "codex"
 
 [[backends]]
 id = "claude"

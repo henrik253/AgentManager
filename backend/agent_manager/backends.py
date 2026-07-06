@@ -17,7 +17,7 @@ class AvailabilityState(StrEnum):
 class BackendAvailability:
     id: str
     display_name: str
-    command: str
+    command: str | None
     enabled: bool
     state: AvailabilityState
     executable_path: str | None
@@ -39,7 +39,7 @@ def inspect_backend(backend: BackendConfig) -> BackendAvailability:
     if not backend.enabled:
         return BackendAvailability(
             id=backend.id,
-            display_name=backend.display_name,
+            display_name=backend.display_name or backend.id,
             command=backend.command,
             enabled=False,
             state=AvailabilityState.DISABLED,
@@ -47,11 +47,22 @@ def inspect_backend(backend: BackendConfig) -> BackendAvailability:
             reason="backend is disabled by configuration",
         )
 
+    if backend.command is None:
+        return BackendAvailability(
+            id=backend.id,
+            display_name=backend.display_name or backend.id,
+            command=None,
+            enabled=True,
+            state=AvailabilityState.AVAILABLE,
+            executable_path=None,
+            reason="no command configured; treating backend as available",
+        )
+
     executable_path = shutil.which(backend.command)
     if executable_path is None:
         return BackendAvailability(
             id=backend.id,
-            display_name=backend.display_name,
+            display_name=backend.display_name or backend.id,
             command=backend.command,
             enabled=True,
             state=AvailabilityState.MISSING,
@@ -61,7 +72,7 @@ def inspect_backend(backend: BackendConfig) -> BackendAvailability:
 
     return BackendAvailability(
         id=backend.id,
-        display_name=backend.display_name,
+        display_name=backend.display_name or backend.id,
         command=backend.command,
         enabled=True,
         state=AvailabilityState.AVAILABLE,

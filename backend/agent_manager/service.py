@@ -16,6 +16,7 @@ from agent_manager.messages import (
     parse_client_message,
     validate_prompt_submission,
 )
+from agent_manager.routing import RoutingError, select_backend
 
 
 LOGGER = logging.getLogger("agent_manager")
@@ -72,17 +73,34 @@ async def handle_client_message(
 async def emit_prompt_lifecycle(
     submission: dict, events: EventWriter, config: AppConfig
 ) -> None:
-    requested_backend = submission["backend"] or "automatic"
     backend_availability = availability_by_id(config.backends)
+    try:
+        routing_decision = select_backend(submission["backend"], config)
+    except RoutingError as exc:
+        await events.send(
+            "error",
+            code=exc.code,
+            message=exc.message,
+            recoverable=True,
+        )
+        await events.send("final.failure", code=exc.code, exit_code=None)
+        return
+
     requested_availability = backend_availability.get(submission["backend"])
+    selected_availability = backend_availability.get(routing_decision.selected_backend)
     await events.send(
         "routing.decision",
-        requested_backend=requested_backend,
+        requested_backend=routing_decision.requested_backend,
         requested_model=submission["model"],
-        selected_backend=None,
+        selected_backend=routing_decision.selected_backend,
         requested_backend_metadata=(
             requested_availability.to_event_payload()
             if requested_availability is not None
+            else None
+        ),
+        selected_backend_metadata=(
+            selected_availability.to_event_payload()
+            if selected_availability is not None
             else None
         ),
         available_backends=[
@@ -90,7 +108,7 @@ async def emit_prompt_lifecycle(
             for availability in backend_availability.values()
             if availability.enabled
         ],
-        reason="backend routing is scheduled for phase 3",
+        reason=routing_decision.reason,
     )
     workspace = submission["workspace"] or {}
     await events.send(
