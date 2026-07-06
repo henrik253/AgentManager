@@ -15,12 +15,14 @@ from agent_manager.availability import (
 )
 from agent_manager.backends import availability_by_id
 from agent_manager.config import AppConfig, load_config
+from agent_manager.execution import BackendExecutionError, run_backend_process
 from agent_manager.messages import (
     EventWriter,
     parse_client_message,
     validate_prompt_submission,
 )
 from agent_manager.routing import RoutingError, select_backend
+from agent_manager.workspace import WorkspaceResolutionError, resolve_task_workspace
 
 
 LOGGER = logging.getLogger("agent_manager")
@@ -118,6 +120,11 @@ async def emit_prompt_lifecycle(
 
     requested_availability = backend_availability.get(submission["backend"])
     selected_availability = backend_availability.get(routing_decision.selected_backend)
+    selected_backend = next(
+        backend
+        for backend in config.backends
+        if backend.id == routing_decision.selected_backend
+    )
     await events.send(
         "routing.decision",
         requested_backend=routing_decision.requested_backend,
@@ -149,18 +156,88 @@ async def emit_prompt_lifecycle(
         worktree_root=config.workspace.worktree_root,
         branch_prefix=config.workspace.branch_prefix,
         allow_existing_worktree=config.workspace.allow_existing_worktree,
-        reason="worktree creation is scheduled for a later phase",
+        reason="workspace will be resolved before backend execution",
+    )
+    try:
+        resolved_workspace = await resolve_task_workspace(
+            config,
+            workspace,
+            session_id=events.session_id,
+        )
+    except WorkspaceResolutionError as exc:
+        await events.send(
+            "workspace.failure",
+            code=exc.code,
+            message=exc.message,
+            detail=exc.detail,
+        )
+        await events.send(
+            "final.failure",
+            code=exc.code,
+            message=exc.message,
+            detail=exc.detail,
+            backend=routing_decision.selected_backend,
+            exit_code=None,
+        )
+        return
+
+    await events.send(
+        "workspace.ready",
+        **resolved_workspace.to_event_payload(),
     )
     await events.send(
         "status.update",
-        status="waiting_for_backend_execution",
-        detail="persistent websocket transport is ready; backend execution is not implemented yet",
+        status="starting",
+        backend=routing_decision.selected_backend,
+        cwd=str(resolved_workspace.path),
     )
+    try:
+        result = await run_backend_process(
+            selected_backend,
+            prompt=submission["prompt"],
+            cwd=resolved_workspace.path,
+            send_event=events.send,
+        )
+    except BackendExecutionError as exc:
+        await events.send(
+            "final.failure",
+            code=exc.code,
+            message=exc.message,
+            backend=routing_decision.selected_backend,
+            exit_code=None,
+            workspace=resolved_workspace.to_event_payload(),
+        )
+        return
+
     await events.send(
-        "final.failure",
-        code="backend_execution_not_implemented",
-        exit_code=None,
+        "status.update",
+        status="completed" if result.succeeded else "failed",
+        backend=result.backend_id,
+        exit_code=result.exit_code,
+        duration_seconds=result.duration_seconds,
     )
+    limit = availability_store.record_limit_message(
+        result.backend_id,
+        "\n".join((result.stderr, result.stdout)),
+        model=submission["model"],
+    )
+    final_payload = {
+        "backend": result.backend_id,
+        "command": list(result.command),
+        "exit_code": result.exit_code,
+        "duration_seconds": result.duration_seconds,
+        "workspace": resolved_workspace.to_event_payload(),
+        "temporary_limit": limit.to_event_payload() if limit is not None else None,
+    }
+    if result.succeeded:
+        await events.send("final.success", **final_payload)
+    else:
+        await events.send(
+            "final.failure",
+            code="backend_process_failed",
+            message=f"backend process exited with code {result.exit_code}",
+            **final_payload,
+        )
 
 
 async def emit_availability_list(

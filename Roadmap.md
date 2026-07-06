@@ -37,14 +37,14 @@ Status: In progress
   - [x] Session accepted event.
   - [x] Routing decision event.
   - [x] Workspace planning event.
-  - [ ] Backend process started event.
-  - [ ] Stdout chunk event.
-  - [ ] Stderr chunk event.
+  - [x] Backend process started event.
+  - [x] Stdout chunk event.
+  - [x] Stderr chunk event.
   - [x] Status update event.
-  - [ ] Final success event.
+  - [x] Final success event.
   - [x] Final failure event.
-  - [ ] Backend metadata.
-  - [ ] Exit status metadata.
+  - [x] Backend metadata.
+  - [x] Exit status metadata.
 - [ ] Add basic connection and session logging.
 - [x] Add local-only default binding for safer development.
 - [x] Avoid HTTP task submission endpoints.
@@ -61,25 +61,25 @@ Status: In progress
   - [x] Health or availability check.
 - [ ] Implement Claude CLI backend support.
   - [x] Detect whether Claude CLI is installed.
-  - [ ] Build command invocation.
-  - [ ] Pass prompt safely.
-  - [ ] Capture stdout and stderr.
-  - [ ] Detect common limit and failure messages.
+  - [x] Build generic configured command invocation.
+  - [x] Pass prompt safely through stdin.
+  - [x] Capture stdout and stderr.
+  - [x] Detect common limit messages.
 - [ ] Implement Codex backend support.
   - [x] Detect whether Codex is installed.
-  - [ ] Build command invocation.
-  - [ ] Pass prompt safely.
-  - [ ] Capture stdout and stderr.
-  - [ ] Detect common limit and failure messages.
+  - [x] Build generic configured command invocation.
+  - [x] Pass prompt safely through stdin.
+  - [x] Capture stdout and stderr.
+  - [x] Detect common limit messages.
 - [ ] Implement Gemini CLI backend support.
   - [x] Detect whether Gemini CLI is installed.
-  - [ ] Build command invocation.
-  - [ ] Pass prompt safely.
-  - [ ] Capture stdout and stderr.
-  - [ ] Detect common limit and failure messages.
+  - [x] Build generic configured command invocation.
+  - [x] Pass prompt safely through stdin.
+  - [x] Capture stdout and stderr.
+  - [x] Detect common limit messages.
 - [ ] Add backend execution timeout handling.
 - [ ] Add structured backend error types.
-- [ ] Scope each backend process to a single session and worktree.
+- [x] Scope each backend process to a single session and worktree.
 
 ## 4. Routing Rules
 
@@ -169,11 +169,11 @@ Status: Complete
 
 Status: Not started
 
-- [ ] Avoid shell interpolation for prompt execution.
-- [ ] Use argument arrays instead of command strings where possible.
+- [x] Avoid shell interpolation for prompt execution.
+- [x] Use argument arrays instead of command strings where possible.
 - [ ] Define which environment variables are passed to backends.
-- [ ] Restrict agent execution to the resolved task worktree.
-- [ ] Prevent arbitrary filesystem paths from being used as worktrees unless explicitly allowed.
+- [x] Restrict agent execution to the resolved task worktree.
+- [x] Prevent arbitrary filesystem paths from being used as worktrees unless explicitly allowed.
 - [ ] Add request size limits.
 - [ ] Add execution timeouts.
 - [ ] Add optional authentication for non-local access.
@@ -197,8 +197,8 @@ Status: Not started
 - [ ] Add unit tests for routing logic.
 - [ ] Add unit tests for configuration parsing.
 - [ ] Add unit tests for limit detection.
-- [ ] Add integration tests with mocked backend commands.
-- [ ] Add websocket session tests.
+- [x] Add integration tests with mocked backend commands.
+- [x] Add websocket session tests.
 - [x] Add terminal client tests.
 - [ ] Document how to run the test suite.
 

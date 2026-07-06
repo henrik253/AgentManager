@@ -37,10 +37,10 @@ Fields:
 Workspace fields:
 
 - `mode`: Optional string. Initial values are `create_worktree` and `existing_worktree`.
-- `branch`: Optional branch name to create or use for the task.
-- `worktree_path`: Optional path for an existing worktree. The service must validate this path against workspace configuration before using it.
+- `branch`: Optional branch name to create or use for the task. When omitted in `create_worktree` mode, the service generates a branch from `workspace.branch_prefix` and the session id.
+- `worktree_path`: Optional path for an existing worktree. The service only accepts this in `existing_worktree` mode when `workspace.allow_existing_worktree` is enabled, and validates that the path is a git worktree before using it.
 
-When no workspace is provided, the service should create or allocate a task worktree using project configuration. It should not run multiple active agent sessions in the same mutable checkout by default.
+When no workspace is provided, the service creates or reuses a task git worktree under the configured `workspace.worktree_root`. Backend processes run with their current working directory set to the resolved worktree.
 
 ### `session.cancel`
 
@@ -114,11 +114,14 @@ Server events are JSON objects with these common fields:
 - `sequence`: Monotonic event number within the session.
 - `timestamp`: UTC ISO-8601 timestamp.
 
-Initial phase 2 events:
+Current task lifecycle events:
 
 - `session.accepted`: The websocket session is open.
 - `routing.decision`: Routing input and selected backend metadata.
 - `workspace.planned`: Task workspace intent, branch, and worktree metadata.
+- `workspace.ready`: Resolved workspace metadata after validation or git worktree creation.
+- `workspace.failure`: Structured workspace resolution failure.
+- `process.started`: Backend process metadata after a subprocess starts.
 - `status.update`: Session or backend status changed.
 - `stdout.chunk`: A chunk of backend stdout.
 - `stderr.chunk`: A chunk of backend stderr.
@@ -128,4 +131,84 @@ Initial phase 2 events:
 - `final.success`: Task completed successfully.
 - `final.failure`: Task failed, was cancelled, or could not start.
 
-Backend execution and worktree creation are implemented in later phases. Until then, `prompt.submit` validates the persistent websocket flow, emits `workspace.planned`, and returns `final.failure` with `code` set to `backend_execution_not_implemented`.
+### Workspace Events
+
+`workspace.planned` preserves the client request and relevant configuration:
+
+```json
+{
+  "type": "workspace.planned",
+  "mode": "create_worktree",
+  "requested_branch": "agent-task/fix-tests",
+  "requested_worktree_path": null,
+  "worktree_root": ".agent-manager/worktrees",
+  "branch_prefix": "agent-task/",
+  "allow_existing_worktree": false
+}
+```
+
+`workspace.ready` reports the cwd selected for backend execution:
+
+```json
+{
+  "type": "workspace.ready",
+  "mode": "create_worktree",
+  "branch": "agent-task/fix-tests",
+  "worktree_path": "/repo/.agent-manager/worktrees/agent-task-fix-tests",
+  "reused": false
+}
+```
+
+If workspace resolution fails, the server emits `workspace.failure` and then `final.failure` with the same failure code and message.
+
+### Process Events
+
+`process.started` is emitted after `asyncio.create_subprocess_exec` successfully starts the configured backend command. The service passes the configured command and args as an argument array; it does not use shell interpolation.
+
+```json
+{
+  "type": "process.started",
+  "backend": "codex",
+  "command": "codex",
+  "args": ["--some-option"],
+  "pid": 12345,
+  "cwd": "/repo/.agent-manager/worktrees/agent-task-fix-tests"
+}
+```
+
+Stdout and stderr are streamed as chunks while the process runs:
+
+```json
+{
+  "type": "stdout.chunk",
+  "backend": "codex",
+  "stream": "stdout",
+  "chunk": "agent output\n",
+  "cwd": "/repo/.agent-manager/worktrees/agent-task-fix-tests"
+}
+```
+
+`stderr.chunk` uses the same shape with `stream` set to `stderr`.
+
+### Final Events
+
+`final.success` and backend-process `final.failure` include backend, command, exit status, duration, workspace, and temporary-limit metadata:
+
+```json
+{
+  "type": "final.success",
+  "backend": "codex",
+  "command": ["codex"],
+  "exit_code": 0,
+  "duration_seconds": 1.23,
+  "workspace": {
+    "mode": "create_worktree",
+    "branch": "agent-task/fix-tests",
+    "worktree_path": "/repo/.agent-manager/worktrees/agent-task-fix-tests",
+    "reused": false
+  },
+  "temporary_limit": null
+}
+```
+
+A non-zero backend exit returns `final.failure` with `code` set to `backend_process_failed`. If stdout or stderr contains a known rate-limit or quota message, `temporary_limit` contains the stored availability limit and the backend is temporarily skipped by later automatic routing decisions until the limit expires or is reset.
