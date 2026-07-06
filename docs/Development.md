@@ -12,6 +12,8 @@ Planned layout:
 - `docs/`: Project documentation that is not part of the README.
 - `tests/`: Backend tests and integration fixtures when the backend is added.
 
+Runtime agent tasks should use separate git worktrees. The service architecture should allow multiple websocket sessions to run concurrently, with each session owning one backend process and one task workspace.
+
 ## Development Workflow
 
 By default, new tasks should be implemented in a separate git worktree on a task branch. The user may explicitly allow work on `main` for small repository setup changes.

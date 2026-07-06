@@ -33,7 +33,7 @@ async def handle_session(websocket: ServerConnection, config: AppConfig) -> None
         async for raw_message in websocket:
             try:
                 message = parse_client_message(raw_message)
-                await handle_client_message(message, events)
+                await handle_client_message(message, events, config)
             except ValueError as exc:
                 await events.send(
                     "error",
@@ -45,12 +45,14 @@ async def handle_session(websocket: ServerConnection, config: AppConfig) -> None
         LOGGER.info("websocket session closed", extra={"session_id": events.session_id})
 
 
-async def handle_client_message(message: dict, events: EventWriter) -> None:
+async def handle_client_message(
+    message: dict, events: EventWriter, config: AppConfig
+) -> None:
     message_type = message["type"]
 
     if message_type == "prompt.submit":
         submission = validate_prompt_submission(message)
-        await emit_prompt_lifecycle(submission, events)
+        await emit_prompt_lifecycle(submission, events, config)
         return
 
     if message_type == "session.cancel":
@@ -66,7 +68,9 @@ async def handle_client_message(message: dict, events: EventWriter) -> None:
     )
 
 
-async def emit_prompt_lifecycle(submission: dict, events: EventWriter) -> None:
+async def emit_prompt_lifecycle(
+    submission: dict, events: EventWriter, config: AppConfig
+) -> None:
     requested_backend = submission["backend"] or "automatic"
     await events.send(
         "routing.decision",
@@ -74,6 +78,17 @@ async def emit_prompt_lifecycle(submission: dict, events: EventWriter) -> None:
         requested_model=submission["model"],
         selected_backend=None,
         reason="backend routing is scheduled for phase 3",
+    )
+    workspace = submission["workspace"] or {}
+    await events.send(
+        "workspace.planned",
+        mode=workspace.get("mode", "create_worktree"),
+        requested_branch=workspace.get("branch"),
+        requested_worktree_path=workspace.get("worktree_path"),
+        worktree_root=config.workspace.worktree_root,
+        branch_prefix=config.workspace.branch_prefix,
+        allow_existing_worktree=config.workspace.allow_existing_worktree,
+        reason="worktree creation is scheduled for a later phase",
     )
     await events.send(
         "status.update",

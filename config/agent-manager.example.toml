@@ -6,6 +6,11 @@ host = "127.0.0.1"
 port = 8765
 websocket_path = "/v1/session"
 
+[workspace]
+worktree_root = ".agent-manager/worktrees"
+branch_prefix = "agent-task/"
+allow_existing_worktree = false
+
 [routing]
 mode = "automatic"
 preferred_backends = ["claude", "codex"]

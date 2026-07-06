@@ -10,15 +10,18 @@ Developers often work across multiple AI coding agents, each with different stre
 
 ## Primary Use Case
 
-A user on a local machine opens a websocket session to this service from a terminal client. The client sends a prompt over that session, the service decides which configured agent backend should handle it, starts that backend on the server, and streams progress and output back until the agent completes.
+A user on a local machine opens a websocket session to this service from a terminal client. The client sends a prompt over that session, the service decides which configured agent backend should handle it, prepares or attaches to a task-specific git worktree, starts that backend on the server, and streams progress and output back until the agent completes.
 
 Example workflow:
 
 1. User runs a terminal command with a prompt.
 2. The command opens or reuses a websocket connection to Agent Manager.
 3. Agent Manager selects an agent backend.
-4. Agent Manager starts Claude CLI or Codex with the prompt.
-5. Agent Manager streams routing information, process lifecycle events, stdout, stderr, and the final result back to the user.
+4. Agent Manager creates or selects a separate branch/worktree for the task.
+5. Agent Manager starts Claude CLI or Codex with the prompt inside that worktree.
+6. Agent Manager streams routing information, workspace metadata, process lifecycle events, stdout, stderr, and the final result back to the user.
+
+Multiple sessions should be able to run at the same time. For example, a user can keep Task A running in one websocket session and start Task B in another session, with each agent operating in its own branch checkout and worktree.
 
 ## Routing Goals
 
@@ -61,6 +64,8 @@ Configuration should live in the project using this application. It should defin
 
 - Available agent backends.
 - Backend command paths and invocation options.
+- Where task worktrees may be created.
+- Branch naming rules for agent tasks.
 - Preferred routing order.
 - Per-project defaults.
 - Optional fallback behavior.
@@ -96,15 +101,19 @@ The websocket session should:
 
 - Accept a prompt or task payload as a client message.
 - Accept optional routing preferences.
+- Accept optional workspace preferences, such as a requested branch name or existing worktree path.
 - Validate the request.
 - Resolve the target backend.
+- Resolve the task workspace without sharing mutable checkout state with other active sessions.
 - Start the selected agent process.
-- Stream structured events for routing decisions, process start, stdout chunks, stderr chunks, status updates, errors, cancellation, exit code, and relevant metadata.
+- Stream structured events for routing decisions, workspace preparation, process start, stdout chunks, stderr chunks, status updates, errors, cancellation, exit code, and relevant metadata.
 - Return a clear final success or failure event.
 - Keep the client experience close to the native agent by preserving backend-specific output where possible.
 - Avoid leaking secrets or unrelated environment details.
 
 The initial service should avoid HTTP task submission endpoints. HTTP can be added later for narrow inspection APIs, but agent interaction should use the persistent websocket transport.
+
+Each websocket session represents one interactive agent task. The service may support multiple simultaneous sessions, but each running backend process must be scoped to one session and one task workspace. Shared project state should be limited to configuration, routing state, and backend availability state.
 
 ## Non-Goals For The Initial Version
 

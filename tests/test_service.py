@@ -29,16 +29,23 @@ def test_prompt_submission_streams_session_events():
                             "type": "prompt.submit",
                             "prompt": "Add websocket transport",
                             "backend": "codex",
+                            "workspace": {
+                                "mode": "create_worktree",
+                                "branch": "agent-task/websocket-transport",
+                            },
                         }
                     )
                 )
 
                 routing = json.loads(await websocket.recv())
+                workspace = json.loads(await websocket.recv())
                 status = json.loads(await websocket.recv())
                 final = json.loads(await websocket.recv())
 
                 assert routing["type"] == "routing.decision"
                 assert routing["requested_backend"] == "codex"
+                assert workspace["type"] == "workspace.planned"
+                assert workspace["requested_branch"] == "agent-task/websocket-transport"
                 assert status["type"] == "status.update"
                 assert final["type"] == "final.failure"
                 assert final["code"] == "backend_execution_not_implemented"

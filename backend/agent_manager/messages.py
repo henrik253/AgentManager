@@ -60,8 +60,36 @@ def validate_prompt_submission(message: JsonObject) -> JsonObject:
     if model is not None and not isinstance(model, str):
         raise ValueError("model must be a string when provided")
 
+    workspace = message.get("workspace")
+    if workspace is not None:
+        workspace = validate_workspace_hint(workspace)
+
     return {
         "prompt": prompt,
         "backend": backend,
         "model": model,
+        "workspace": workspace,
+    }
+
+
+def validate_workspace_hint(workspace: Any) -> JsonObject:
+    if not isinstance(workspace, dict):
+        raise ValueError("workspace must be an object when provided")
+
+    mode = workspace.get("mode")
+    if mode is not None and mode not in {"create_worktree", "existing_worktree"}:
+        raise ValueError("workspace.mode must be create_worktree or existing_worktree")
+
+    branch = workspace.get("branch")
+    if branch is not None and not isinstance(branch, str):
+        raise ValueError("workspace.branch must be a string when provided")
+
+    worktree_path = workspace.get("worktree_path")
+    if worktree_path is not None and not isinstance(worktree_path, str):
+        raise ValueError("workspace.worktree_path must be a string when provided")
+
+    return {
+        "mode": mode or "create_worktree",
+        "branch": branch,
+        "worktree_path": worktree_path,
     }

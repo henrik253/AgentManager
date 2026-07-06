@@ -30,11 +30,13 @@ Status: In progress
   - [x] Accept prompt submission messages.
   - [x] Accept optional backend selection.
   - [x] Accept optional model or tier preference.
+  - [x] Accept optional task workspace hints.
   - [x] Validate required message fields.
   - [x] Support client-side cancellation messages.
 - [x] Define the streaming event format.
   - [x] Session accepted event.
   - [x] Routing decision event.
+  - [x] Workspace planning event.
   - [ ] Backend process started event.
   - [ ] Stdout chunk event.
   - [ ] Stderr chunk event.
@@ -71,6 +73,7 @@ Status: Not started
   - [ ] Detect common limit and failure messages.
 - [ ] Add backend execution timeout handling.
 - [ ] Add structured backend error types.
+- [ ] Scope each backend process to a single session and worktree.
 
 ## 4. Routing Rules
 
@@ -141,6 +144,10 @@ Status: Not started
 - [ ] Load project-local configuration.
 - [ ] Validate configuration schema.
 - [ ] Provide useful validation errors.
+- [ ] Define workspace configuration.
+  - [ ] Allowed worktree root.
+  - [ ] Task branch prefix.
+  - [ ] Existing worktree attachment rules.
 - [ ] Support environment variable overrides for sensitive values.
 - [ ] Add example configurations.
   - [ ] Claude-first routing.
@@ -155,6 +162,8 @@ Status: Not started
 - [ ] Avoid shell interpolation for prompt execution.
 - [ ] Use argument arrays instead of command strings where possible.
 - [ ] Define which environment variables are passed to backends.
+- [ ] Restrict agent execution to the resolved task worktree.
+- [ ] Prevent arbitrary filesystem paths from being used as worktrees unless explicitly allowed.
 - [ ] Add request size limits.
 - [ ] Add execution timeouts.
 - [ ] Add optional authentication for non-local access.
@@ -216,3 +225,4 @@ Status: Not started
 - [ ] Per-repository routing profiles.
 - [ ] Provider API integrations for richer usage-limit detection.
 - [ ] Concurrent task controls.
+- [ ] Session list and reconnect support.
