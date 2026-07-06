@@ -15,6 +15,7 @@ from agent_manager.messages import (
     parse_client_message,
     validate_prompt_submission,
 )
+from agent_manager.routing import RoutingError, select_backend
 
 
 LOGGER = logging.getLogger("agent_manager")
@@ -71,13 +72,24 @@ async def handle_client_message(
 async def emit_prompt_lifecycle(
     submission: dict, events: EventWriter, config: AppConfig
 ) -> None:
-    requested_backend = submission["backend"] or "automatic"
+    try:
+        routing_decision = select_backend(submission["backend"], config)
+    except RoutingError as exc:
+        await events.send(
+            "error",
+            code=exc.code,
+            message=exc.message,
+            recoverable=True,
+        )
+        await events.send("final.failure", code=exc.code, exit_code=None)
+        return
+
     await events.send(
         "routing.decision",
-        requested_backend=requested_backend,
+        requested_backend=routing_decision.requested_backend,
         requested_model=submission["model"],
-        selected_backend=None,
-        reason="backend routing is scheduled for phase 3",
+        selected_backend=routing_decision.selected_backend,
+        reason=routing_decision.reason,
     )
     workspace = submission["workspace"] or {}
     await events.send(

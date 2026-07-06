@@ -77,24 +77,24 @@ Status: Not started
 
 ## 4. Routing Rules
 
-Status: Not started
+Status: In progress
 
-- [ ] Define the routing configuration format.
-  - [ ] Default backend.
-  - [ ] Preferred backend list.
+- [x] Define the routing configuration format.
+  - [x] Default backend.
+  - [x] Preferred backend list.
   - [ ] Preferred model or tier list.
-  - [ ] Fallback behavior.
+  - [x] Fallback behavior.
   - [ ] Force-routing option.
-- [ ] Implement explicit user routing.
-  - [ ] Route to a requested backend.
-  - [ ] Return a clear error for unknown backends.
-  - [ ] Return a clear error for unavailable backends unless forced.
-- [ ] Implement automatic routing.
-  - [ ] Select the first available preferred backend.
+- [x] Implement explicit user routing.
+  - [x] Route to a requested backend.
+  - [x] Return a clear error for unknown backends.
+  - [x] Return a clear error for unavailable backends unless forced.
+- [x] Implement automatic routing.
+  - [x] Select the first available preferred backend.
   - [ ] Skip temporarily limited backends.
-  - [ ] Fall back when a backend command is missing.
-  - [ ] Explain which backend was selected and why.
-- [ ] Add tests for routing priority and fallback behavior.
+  - [x] Fall back when a backend command is missing.
+  - [x] Explain which backend was selected and why.
+- [x] Add tests for routing priority and fallback behavior.
 
 ## 5. Limit And Availability Tracking
 
