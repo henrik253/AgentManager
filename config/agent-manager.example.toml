@@ -13,7 +13,7 @@ allow_existing_worktree = false
 
 [routing]
 mode = "automatic"
-preferred_backends = ["claude", "codex"]
+preferred_backends = ["claude", "codex", "gemini"]
 allow_fallback = true
 
 [[backends]]
@@ -26,4 +26,10 @@ enabled = true
 id = "codex"
 display_name = "Codex"
 command = "codex"
+enabled = true
+
+[[backends]]
+id = "gemini"
+display_name = "Gemini CLI"
+command = "gemini"
 enabled = true

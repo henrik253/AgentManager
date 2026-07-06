@@ -9,6 +9,7 @@ from urllib.parse import urlsplit
 from websockets.asyncio.server import ServerConnection, serve
 from websockets.exceptions import ConnectionClosed
 
+from agent_manager.backends import availability_by_id
 from agent_manager.config import AppConfig, DEFAULT_CONFIG_PATH, load_config
 from agent_manager.messages import (
     EventWriter,
@@ -72,11 +73,23 @@ async def emit_prompt_lifecycle(
     submission: dict, events: EventWriter, config: AppConfig
 ) -> None:
     requested_backend = submission["backend"] or "automatic"
+    backend_availability = availability_by_id(config.backends)
+    requested_availability = backend_availability.get(submission["backend"])
     await events.send(
         "routing.decision",
         requested_backend=requested_backend,
         requested_model=submission["model"],
         selected_backend=None,
+        requested_backend_metadata=(
+            requested_availability.to_event_payload()
+            if requested_availability is not None
+            else None
+        ),
+        available_backends=[
+            availability.to_event_payload()
+            for availability in backend_availability.values()
+            if availability.enabled
+        ],
         reason="backend routing is scheduled for phase 3",
     )
     workspace = submission["workspace"] or {}

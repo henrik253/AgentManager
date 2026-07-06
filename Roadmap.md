@@ -51,22 +51,28 @@ Status: In progress
 
 ## 3. Backend Abstraction
 
-Status: Not started
+Status: In progress
 
-- [ ] Define a common backend interface.
-  - [ ] Backend identifier.
-  - [ ] Display name.
-  - [ ] Command path.
+- [x] Define a common backend interface.
+  - [x] Backend identifier.
+  - [x] Display name.
+  - [x] Command path.
   - [ ] Supported options.
-  - [ ] Health or availability check.
+  - [x] Health or availability check.
 - [ ] Implement Claude CLI backend support.
-  - [ ] Detect whether Claude CLI is installed.
+  - [x] Detect whether Claude CLI is installed.
   - [ ] Build command invocation.
   - [ ] Pass prompt safely.
   - [ ] Capture stdout and stderr.
   - [ ] Detect common limit and failure messages.
 - [ ] Implement Codex backend support.
-  - [ ] Detect whether Codex is installed.
+  - [x] Detect whether Codex is installed.
+  - [ ] Build command invocation.
+  - [ ] Pass prompt safely.
+  - [ ] Capture stdout and stderr.
+  - [ ] Detect common limit and failure messages.
+- [ ] Implement Gemini CLI backend support.
+  - [x] Detect whether Gemini CLI is installed.
   - [ ] Build command invocation.
   - [ ] Pass prompt safely.
   - [ ] Capture stdout and stderr.

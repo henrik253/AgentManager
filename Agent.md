@@ -1,6 +1,6 @@
 # Agent Manager
 
-Agent Manager is a project-local service for routing prompts from a local terminal to agent CLIs installed on this server. The first supported agent backends are Claude CLI and Codex.
+Agent Manager is a project-local service for routing prompts from a local terminal to agent CLIs installed on this server. The first supported agent backends are Claude CLI, Codex, and Gemini CLI.
 
 The core goal is to provide a persistent websocket connection that can start an available agent with a supplied prompt, then stream the agent's activity, output, status changes, and final result back to the caller as they happen.
 
@@ -18,7 +18,7 @@ Example workflow:
 2. The command opens or reuses a websocket connection to Agent Manager.
 3. Agent Manager selects an agent backend.
 4. Agent Manager creates or selects a separate branch/worktree for the task.
-5. Agent Manager starts Claude CLI or Codex with the prompt inside that worktree.
+5. Agent Manager starts Claude CLI, Codex, or Gemini CLI with the prompt inside that worktree.
 6. Agent Manager streams routing information, workspace metadata, process lifecycle events, stdout, stderr, and the final result back to the user.
 
 Multiple sessions should be able to run at the same time. For example, a user can keep Task A running in one websocket session and start Task B in another session, with each agent operating in its own branch checkout and worktree.

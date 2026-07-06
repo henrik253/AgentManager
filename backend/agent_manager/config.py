@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 import tomllib
 
 
@@ -24,9 +25,19 @@ class WorkspaceConfig:
 
 
 @dataclass(frozen=True)
+class BackendConfig:
+    id: str
+    display_name: str
+    command: str
+    enabled: bool = True
+    args: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
 class AppConfig:
     server: ServerConfig = ServerConfig()
     workspace: WorkspaceConfig = WorkspaceConfig()
+    backends: tuple[BackendConfig, ...] = ()
 
 
 def load_config(path: Path = DEFAULT_CONFIG_PATH) -> AppConfig:
@@ -38,6 +49,7 @@ def load_config(path: Path = DEFAULT_CONFIG_PATH) -> AppConfig:
 
     server_data = data.get("server", {})
     workspace_data = data.get("workspace", {})
+    backend_data = data.get("backends", [])
     websocket_path = str(server_data.get("websocket_path", ServerConfig.websocket_path))
     if not websocket_path.startswith("/"):
         raise ValueError("server.websocket_path must start with '/'")
@@ -65,4 +77,43 @@ def load_config(path: Path = DEFAULT_CONFIG_PATH) -> AppConfig:
                 )
             ),
         ),
+        backends=parse_backends(backend_data),
     )
+
+
+def parse_backends(backends: Any) -> tuple[BackendConfig, ...]:
+    if not isinstance(backends, list):
+        raise ValueError("backends must be an array of tables")
+
+    parsed = []
+    seen_ids = set()
+    for backend in backends:
+        if not isinstance(backend, dict):
+            raise ValueError("each backend entry must be a table")
+
+        backend_id = str(backend.get("id", "")).strip()
+        if not backend_id:
+            raise ValueError("backend.id is required")
+        if backend_id in seen_ids:
+            raise ValueError(f"duplicate backend id: {backend_id}")
+        seen_ids.add(backend_id)
+
+        command = str(backend.get("command", "")).strip()
+        if not command:
+            raise ValueError(f"backend.command is required for {backend_id}")
+
+        args = backend.get("args", [])
+        if not isinstance(args, list) or not all(isinstance(arg, str) for arg in args):
+            raise ValueError(f"backend.args must be an array of strings for {backend_id}")
+
+        parsed.append(
+            BackendConfig(
+                id=backend_id,
+                display_name=str(backend.get("display_name", backend_id)),
+                command=command,
+                enabled=bool(backend.get("enabled", True)),
+                args=tuple(args),
+            )
+        )
+
+    return tuple(parsed)
